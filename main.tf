@@ -18,7 +18,7 @@ data "oci_core_images" "_" {
   operating_system         = "Canonical Ubuntu"
   operating_system_version = "22.04"
   #operating_system         = "Oracle Linux"
-  #operating_system_version = "7.9"
+  #operating_system_version = "9.4"
 }
 
 resource "oci_core_instance" "_" {

@@ -1,9 +1,10 @@
 # Terraform
 .terraform*
 terraform.tfstate*
+.terraform/
 
 # SSH keys
 id_rsa*
 
 # K8s
-kubeconfig
+kubeconfig.terraform/
