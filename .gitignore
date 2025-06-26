@@ -5,6 +5,19 @@ terraform.tfstate*
 
 # SSH keys
 id_rsa*
+*.pem
+*.key
+sshkey.tf
 
 # K8s
+kubeconfig
 kubeconfig.terraform/
+
+# OCI Configuration
+ap-osaka-1
+*.oci
+oci_config
+
+# Sensitive files
+*.conf
+*.config

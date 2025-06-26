@@ -7,6 +7,23 @@ rm ~/.oci/config
 oci session authenticate
 ```
 
+## 敏感文件處理
+
+### 重要：以下文件包含敏感資訊，不會被上傳到版本控制系統：
+
+| 文件 | 說明 | 處理方式 |
+|------|------|----------|
+| `ap-osaka-1` | OCI 配置文件 | 複製 `ap-osaka-1.example` 並填入你的實際配置 |
+| `id_rsa` | SSH 私鑰 | 由 Terraform 自動生成，每次部署都會重新生成 |
+| `id_rsa.pub` | SSH 公鑰 | 由 Terraform 自動生成，每次部署都會重新生成 |
+| `kubeconfig` | Kubernetes 配置 | 由 Terraform 自動生成，包含集群認證資訊 |
+
+### 設置步驟：
+1. 複製範例配置文件：`cp ap-osaka-1.example ap-osaka-1`
+2. 編輯配置文件：`vi ap-osaka-1`
+3. 填入你的實際 OCI 配置資訊
+4. 運行 `terraform apply` 生成其他必要文件
+
 ## Steps
 1. Create an Oracle Cloud Infrastructure account (just follow this link).
 2. Have installed or install kubernetes.
