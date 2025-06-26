@@ -1,3 +1,4 @@
+# 定義一個本地變量 packages，這個變量是一個列表，包含了需要安裝的軟件包名稱
 locals {
   packages = [
     "apt-transport-https",
@@ -21,19 +22,20 @@ locals {
     "unzip",
   ]
 }
-
+# 定義一個 cloud-init 配置資料塊，為每個節點生成初始化配置
 data "cloudinit_config" "_" {
+  # 使用本地變量 local.nodes 為每個節點生成一個配置
   for_each = local.nodes
-
+  # 定義 cloud-init 的一部分，用於設置主機名和安裝軟件包
   part {
-    filename     = "cloud-config.cfg"
-    content_type = "text/cloud-config"
+    filename     = "cloud-config.cfg" # 配置文件名稱
+    content_type = "text/cloud-config" # 文件類型
     content      = <<-EOF
-      hostname: ${each.value.node_name}
-      package_update: true
-      package_upgrade: false
+      hostname: ${each.value.node_name} 
+      package_update: true 
+      package_upgrade: false 
       packages:
-      ${yamlencode(local.packages)}
+      ${yamlencode(local.packages)} 
       apt:
         sources:
           kubernetes.list:
@@ -92,6 +94,7 @@ data "cloudinit_config" "_" {
       EOF
   }
 
+  # 定義 cloud-init 的另一部分，用於修改預設的防火牆規則，允許所有入站流量
   # By default, all inbound traffic is blocked
   # (except SSH) so we need to change that.
   part {
@@ -111,6 +114,7 @@ data "cloudinit_config" "_" {
     EOF
   }
 
+  # 定義 cloud-init 的另一部分，用於重新啟用 Docker 的 CRI（容器運行時介面）
   # Docker's default containerd configuration disables CRI.
   # Let's re-enable it.
   part {
@@ -123,6 +127,7 @@ data "cloudinit_config" "_" {
     EOF
   }
 
+  # 為控制平面節點定義初始化腳本，動態生成
   dynamic "part" {
     for_each = each.value.role == "controlplane" ? ["yes"] : []
     content {
@@ -141,7 +146,7 @@ data "cloudinit_config" "_" {
       EOF
     }
   }
-
+  # 為工作節點定義加入集群的腳本，動態生成
   dynamic "part" {
     for_each = each.value.role == "worker" ? ["yes"] : []
     content {
