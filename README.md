@@ -71,12 +71,84 @@ oci session authenticate
 | node3 | Worker | 10.0.0.13 | 自動分配 | 工作節點 |
 | node4 | Worker | 10.0.0.14 | 自動分配 | 工作節點 |
 
+## VM 量體配置詳情
+
+### 虛擬機規格配置
+
+| 配置項目 | 數值 | 說明 |
+|---------|------|------|
+| **VM Shape** | `VM.Standard.A1.Flex` | ARM 架構的彈性虛擬機 |
+| **CPU 核心數** | `1 OCPU` | 每個節點 1 個 OCPU |
+| **記憶體** | `6 GB` | 每個節點 6GB 記憶體 |
+| **節點數量** | `4 個` | 總共 4 個節點 (1個控制平面 + 3個工作節點) |
+
+### 儲存配置
+
+| 配置項目 | 數值 | 說明 |
+|---------|------|------|
+| **啟動磁碟** | 自動分配 | 使用 Ubuntu 22.04 映像檔 |
+| **啟動磁碟容量** | 未指定 | 使用 OCI 預設容量（通常為 46.6 GB） |
+| **磁碟類型** | 預設 | 未明確指定，使用 OCI 預設 |
+| **額外區塊儲存** | 無 | 未配置額外的區塊儲存 |
+| **持久化儲存** | 無 | 未配置 Kubernetes PV/PVC |
+
+### 可用性配置
+
+| 配置項目 | 數值 | 說明 |
+|---------|------|------|
+| **可用性域** | `0` | 所有節點部署在同一可用性域 |
+| **Compartment** | `peoplesystem-arm` | 資源隔離區 |
+
+### 目前缺少的儲存配置
+
+基於分析，您的配置中**沒有明確的儲存量體配置**，包括：
+
+- ❌ **沒有明確指定啟動磁碟容量**（使用 OCI 預設 46.6 GB）
+- ❌ **沒有區塊儲存 (Block Volume) 配置**
+- ❌ **沒有持久化儲存 (Persistent Volume) 配置**  
+- ❌ **沒有 Kubernetes 儲存類別 (Storage Class) 配置**
+- ❌ **沒有檔案儲存 (File Storage) 配置**
+
+### 建議的儲存增強配置
+
+如果您需要持久化儲存，建議添加以下配置：
+
+```hcl
+# 啟動磁碟容量配置範例
+resource "oci_core_instance" "_" {
+  # ... 其他配置 ...
+  source_details {
+    source_id   = data.oci_core_images._.images[0].id
+    source_type = "image"
+    boot_volume_size_in_gbs = 100  # 明確指定啟動磁碟容量為 100 GB
+  }
+  # ... 其他配置 ...
+}
+
+# 區塊儲存配置範例
+resource "oci_core_volume" "data_volume" {
+  compartment_id      = local.compartment_id
+  availability_domain = data.oci_identity_availability_domains._.availability_domains[var.availability_domain].name
+  display_name        = "data-volume"
+  size_in_gbs         = 100
+}
+
+# 區塊儲存附件
+resource "oci_core_volume_attachment" "data_volume_attachment" {
+  attachment_type = "paravirtualized"
+  compartment_id  = local.compartment_id
+  instance_id     = oci_core_instance._[1].id
+  volume_id       = oci_core_volume.data_volume.id
+}
+```
+
 ### 重要說明
 
 - **子網類型**：當前使用 **Public Subnet**，所有節點都可以直接訪問網際網路
 - **安全性**：Security List 目前開放所有流量，生產環境建議限制
 - **IP 分配**：每個節點都有靜態私有 IP 和動態公共 IP
 - **可用性域**：所有節點部署在同一個可用性域中
+- **儲存配置**：目前使用最小化配置，主要依賴預設的啟動磁碟
 
 ## Steps
 1. Create an Oracle Cloud Infrastructure account (just follow this link).
